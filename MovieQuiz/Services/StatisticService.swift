@@ -21,7 +21,11 @@ final class StatisticService: StatisticServiceProtocol {
     }
     
     private enum Keys: String {
-        case correct, bestGame, gamesCount, bestGameDate, bestGameTotal
+        case correct,
+             bestGame,
+             gamesCount,
+             bestGameDate,
+             bestGameTotal
     }
     
     var gamesCount: Int {
@@ -58,6 +62,15 @@ final class StatisticService: StatisticServiceProtocol {
             bestGame = newGame
         }
         correct += count
+        gamesCount += 1
+    }
+    
+    func store(currentGame: GameResult) {
+        if currentGame.isBetterThan(bestGame) {
+            bestGame = currentGame
+        }
+        
+        correct += currentGame.correct
         gamesCount += 1
     }
 }

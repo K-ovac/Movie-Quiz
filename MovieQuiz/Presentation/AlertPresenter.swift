@@ -6,27 +6,23 @@
 //
 
 import UIKit
+import Foundation
 
-class AlertPresenter {
-    private weak var viewController: UIViewController?
+final class AlertPresenter: AlertPresenterProtocol {
     
-    init(viewController: UIViewController) {
-        self.viewController = viewController
+    weak var delegate: AlertPresenterDelegate?
+    
+    init(delegate: AlertPresenterDelegate?) {
+        self.delegate = delegate
     }
     
-    func showResults(quiz result: AlertModel) {
-        let alert = UIAlertController(
-            title: result.title,
-            message: result.message,
-            preferredStyle: .alert) //actionSheet (выход снизу)
+    func displayAlert (model: AlertModel) {
+        let alert = UIAlertController(title: model.title, message: model.message, preferredStyle: .alert)
         
-        let action = UIAlertAction(title: result.buttonText, style: .default) { _ in
-            result.completion?()
+        let action = UIAlertAction(title: model.buttonText, style: .default) { _ in  model.completion?()
         }
         
         alert.addAction(action)
-        viewController?.present(alert, animated: true, completion: nil)
+        delegate?.didAlertPresent(alert:alert)
     }
 }
-
-

@@ -12,11 +12,9 @@ protocol StatisticServiceProtocol {
     var bestGame: GameResult { get }
     var totalAccuracy: Double { get }
     
-    func store(correct count: Int, total amount: Int)
-    func getStatisticsText(correct count: Int, total amount: Int) -> String
+    func store(currentGame: GameResult)
 }
 
-//Чем выносить код в MovieQuiz, модифицируем Protocol, чтобы он сам формировал статистику
 extension StatisticServiceProtocol {
     func getStatisticsText(correct count: Int, total amount: Int) -> String {
         let statistics = [

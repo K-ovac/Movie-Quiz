@@ -1,6 +1,7 @@
 import UIKit
+import Foundation
 
-final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
+final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, AlertPresenterDelegate {
     
     private let questionsAmount: Int = 10
     private var questionFactory: QuestionFactoryProtocol?
@@ -17,19 +18,21 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet weak private var counterLabel: UILabel!
     @IBOutlet weak private var noButtonOutlets: UIButton!
     @IBOutlet weak private var yesButtonOutlets: UIButton!
+    @IBOutlet private var activityIndicator: UIActivityIndicatorView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print("viewDidLoad called")
         
         imageView.layer.cornerRadius = 20
         imageView.clipsToBounds = true
         
-        alertPresenter = AlertPresenter(viewController: self)
         statisticService = StatisticService()
-        questionFactory = QuestionFactory(delegate: self)
+        self.alertPresenter = AlertPresenter(delegate: self)
         
-        guard let questionFactory = questionFactory else { return }
-        questionFactory.requestNextQuestion()
+        questionFactory = QuestionFactory(moviesLoader: MoviesLoader(), delegate: self)
+        showLoadingIndicator()
+        questionFactory?.loadData()
     }
     
     func didReceiveNextQuestion(question: QuizQuestion?) {
@@ -41,15 +44,27 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         let viewModel = convert(model: question)
         
         DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.show(quiz: viewModel)
+            self?.show(quiz: viewModel)
+            self?.updateButtonsState(isEnabled: true)
+            self?.imageView.layer.borderWidth = 0
         }
     }
     
+    func didLoadDataFromServer() {
+        hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        showNetworkError(message: error.localizedDescription)
+    }
+    
+    func didAlertPresent(alert: UIAlertController) {
+        present(alert, animated: true)
+    }
+    
     @IBAction private func yesButtonClicked(_ sender: Any) {
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
+        guard let currentQuestion = currentQuestion else { return }
         
         showAnswerResult(isCorrect: currentQuestion.correctAnswer)
         updateButtonsState(isEnabled: false)
@@ -57,9 +72,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     
     @IBAction private func noButtonClicked(_ sender: Any) {
         
-        guard let currentQuestion = currentQuestion else {
-            return
-        }
+        guard let currentQuestion = currentQuestion else { return }
         
         showAnswerResult(isCorrect: !currentQuestion.correctAnswer)
         updateButtonsState(isEnabled: false)
@@ -68,7 +81,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         
         QuizStepViewModel(
-            image: UIImage(named: model.image) ?? UIImage(),
+            image: UIImage(data: model.image) ?? UIImage(),
             question: model.text,
             questionNumber: "\(currentQuestionIndex + 1)/\(questionsAmount)")
     }
@@ -77,6 +90,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         imageView.image = step.image
         textLabel.text = step.question
         counterLabel.text = step.questionNumber
+        
+        hideLoadingIndicator()
     }
     
     private func showAnswerResult(isCorrect: Bool) {
@@ -89,13 +104,10 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         imageView.layer.borderWidth = 8
         imageView.layer.borderColor = isCorrect ? UIColor.ypGreenIOS.cgColor : UIColor.ypRedIOS.cgColor
         
+        self.showLoadingIndicator()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             guard let self = self else { return }
-            
             self.showNextQuestionOrResults()
-            
-            self.imageView.layer.borderColor = UIColor.clear.cgColor
-            self.updateButtonsState(isEnabled: true)
         }
     }
     
@@ -105,7 +117,8 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             "Поздравляем, вы ответили на 10 из 10!" :
             "Вы ответили на \(correctAnswers) из 10, попробуйте ещё раз!"
             
-            statisticService?.store(correct: correctAnswers, total: questionsAmount)
+            let game = GameResult(correct: correctAnswers, total: questionsAmount, date: Date())
+            statisticService?.store(currentGame: game)
             
             let viewModel = QuizResultViewModel(
                 title: "Этот раунд окончен!",
@@ -115,12 +128,11 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         } else {
             currentQuestionIndex += 1
             
-            self.questionFactory?.requestNextQuestion()
+            questionFactory?.requestNextQuestion()
         }
     }
     
     private func showResults(quiz result: QuizResultViewModel) {
-        
         let statisticText = statisticService?.getStatisticsText(correct: correctAnswers, total: questionsAmount) ?? "Статистики нет"
         let alertModel = AlertModel(
             title: result.title,
@@ -134,11 +146,30 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
                 self.questionFactory?.requestNextQuestion()
             }
         )
-        alertPresenter?.showResults(quiz: alertModel)
+        alertPresenter?.displayAlert(model: alertModel)
     }
     
     private func updateButtonsState(isEnabled: Bool) {
         noButtonOutlets.isEnabled = isEnabled
         yesButtonOutlets.isEnabled = isEnabled
+    }
+    
+    private func showLoadingIndicator() {
+        activityIndicator.isHidden = false
+        activityIndicator.startAnimating()
+    }
+    
+    private func hideLoadingIndicator() {
+        activityIndicator.stopAnimating()
+        activityIndicator.isHidden = true
+    }
+    
+    private func showNetworkError(message: String) {
+        hideLoadingIndicator()
+        let alertModel = AlertModel(title: "Ошибка",
+                                    message: message,
+                                    buttonText: "Попробовать еще раз",
+                                    completion: nil)
+        alertPresenter?.displayAlert(model: alertModel)
     }
 }
