@@ -8,6 +8,11 @@
 import UIKit
 import Foundation
 
+enum ReasonForAlert {
+    case endGame
+    case errorWithData
+}
+
 final class AlertPresenter: AlertPresenterProtocol {
     
     weak var delegate: AlertPresenterDelegate?

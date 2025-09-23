@@ -15,10 +15,15 @@ private let imdbKey = "k_zcuw1ytf"
 private let imdbUrl = "https://tv-api.com/en/API/Top250Movies/"
 
 struct MoviesLoader: MoviesLoading {
-    private let networkClient = NetworkClient()
+    private let networkClient: NetworkRouting
+    
+    init(networkClient: NetworkRouting = NetworkClient()) {
+        self.networkClient = networkClient
+    }
+    
     private var popularMoviesUrl: URL {
         guard let url = URL(string: "\(imdbUrl)\(imdbKey)") else {
-            preconditionFailure("Unable to construct mostPopularMoviesUrl")
+            preconditionFailure("Unable to construct popularMoviesUrl")
         }
         
         return url

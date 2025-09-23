@@ -7,7 +7,7 @@
 
 import Foundation
 
-final class StatisticService: StatisticServiceProtocol {
+class StatisticService: StatisticServiceProtocol {
     
     private let storage: UserDefaults = .standard
     
@@ -72,5 +72,22 @@ final class StatisticService: StatisticServiceProtocol {
         
         correct += currentGame.correct
         gamesCount += 1
+    }
+}
+
+final class StatisticServiceImplementation: StatisticServiceProtocol {
+    private(set) var gamesCount: Int = 0
+    private(set) var bestGame: GameResult = GameResult(correct: 0, total: 0, date: Date())
+    private(set) var totalAccuracy: Double = 0.0
+    
+    func store(currentGame: GameResult) {
+        gamesCount += 1
+        
+        let currentAccuracy = Double(currentGame.correct) / Double(currentGame.total) * 100
+        totalAccuracy = ((totalAccuracy * Double(gamesCount - 1)) + currentAccuracy) / Double(gamesCount)
+        
+        if currentGame.isBetterThan(bestGame) {
+            bestGame = currentGame
+        }
     }
 }
