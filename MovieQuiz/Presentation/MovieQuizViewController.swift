@@ -15,6 +15,12 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
         super.viewDidLoad()
         imageView.layer.cornerRadius = 20
         imageView.clipsToBounds = true
+        
+        imageView.accessibilityIdentifier = "Poster"
+        counterLabel.accessibilityIdentifier = "Index"
+        yesButtonOutlets.accessibilityIdentifier = "Yes"
+        noButtonOutlets.accessibilityIdentifier = "No"
+        
         presenter = MovieQuizPresenter(viewController: self)
     }
     
@@ -46,6 +52,8 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
             message: result.text,
             preferredStyle: .alert
         )
+        alert.view.accessibilityIdentifier = "GameResultsAlert"
+        
         let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
             self?.presenter.restartGame()
         }
