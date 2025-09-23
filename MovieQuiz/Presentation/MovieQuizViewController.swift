@@ -22,7 +22,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate, 
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        print("viewDidLoad called")
         
         imageView.layer.cornerRadius = 20
         imageView.clipsToBounds = true

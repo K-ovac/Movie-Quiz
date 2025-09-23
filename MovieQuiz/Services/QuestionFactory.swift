@@ -18,7 +18,7 @@ final class QuestionFactory: QuestionFactoryProtocol {
     private var movies: [MostPopularMovie] = []
     
     func loadData() {
-        print("QuestionFactory loadData")
+        print("QuestionFactory loadData called")
         moviesLoader.loadMovies { [weak self] result in
             DispatchQueue.main.async {
                 guard let self = self else { return }
@@ -30,7 +30,7 @@ final class QuestionFactory: QuestionFactoryProtocol {
                     print("didLoadDataFromServer")
                     
                     self.delegate?.didLoadDataFromServer()
-                    print("didLoadDataFromServer delegate")
+                    print("didLoadDataFromServer called on delegate")
                     
                 case .failure(let error):
                     self.delegate?.didFailToLoadData(with: error)
