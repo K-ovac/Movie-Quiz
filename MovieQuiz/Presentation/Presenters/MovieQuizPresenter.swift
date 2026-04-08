@@ -7,19 +7,24 @@
 
 import UIKit
 
+// MARK: - MovieQuizViewControllerProtocol
+
 protocol MovieQuizViewControllerProtocol: AnyObject {
     func show(quiz step: QuizStepViewModel)
     func showResults(quiz result: QuizResultViewModel)
     func showAnswerResult(isCorrect: Bool)
     func updateButtonsState(isEnabled: Bool)
-    
     func showLoadingIndicator()
     func hideLoadingIndicator()
-    
     func showNetworkError(message: String)
 }
 
+// MARK: - MovieQuizPresenter: QuestionFactoryDelegate
+
 final class MovieQuizPresenter: QuestionFactoryDelegate {
+    
+    // MARK: - Properties
+    
     private let statisticService: StatisticServiceProtocol
     private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
@@ -29,6 +34,8 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
     
     private weak var viewController: MovieQuizViewControllerProtocol?
     
+    // MARK: - Init
+    
     init(viewController: MovieQuizViewControllerProtocol) {
         self.viewController = viewController
         statisticService = StatisticServiceImplementation()
@@ -37,56 +44,14 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         viewController.showLoadingIndicator()
     }
     
-    func didLoadDataFromServer() {
-        viewController?.hideLoadingIndicator()
-        questionFactory?.requestNextQuestion()
-    }
-    
-    func didFailToLoadData(with error: Error) {
-        viewController?.showNetworkError(message: error.localizedDescription)
-    }
-    
-    func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else { return }
-        currentQuestion = question
-        let viewModel = convert(model: question)
-        DispatchQueue.main.async { [weak self] in
-            self?.viewController?.show(quiz: viewModel)
-            self?.viewController?.updateButtonsState(isEnabled: true)
-        }
-    }
+    // MARK: - Private Methods
     
     private func isLastQuestion() -> Bool {
         currentQuestionIndex == questionsAmount - 1
     }
     
-    func restartGame(dueTo reason: ReasonForAlert? = nil) {
-        currentQuestionIndex = 0
-        correctAnswers = 0
-        switch reason {
-        case .errorWithData:
-            questionFactory?.loadData()
-        default:
-            questionFactory?.requestNextQuestion()
-        }
-    }
-    
     private func switchToNextQuestion() {
         currentQuestionIndex += 1
-    }
-    
-    func yesButtonClicked() {
-        didAnswer(isYes: true)
-    }
-    
-    func noButtonClicked() {
-        didAnswer(isYes: false)
-    }
-    
-    private func didAnswer(isYes: Bool) {
-        guard let currentQuestion = currentQuestion else { return }
-        let isCorrect = isYes == currentQuestion.correctAnswer
-        proceedWithAnswer(isCorrect: isCorrect)
     }
     
     private func proceedWithAnswer(isCorrect: Bool) {
@@ -95,8 +60,8 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
         viewController?.showAnswerResult(isCorrect: isCorrect)
         viewController?.updateButtonsState(isEnabled: false)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.showNextQuestionOrResults()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.showNextQuestionOrResults()
         }
     }
     
@@ -117,6 +82,44 @@ final class MovieQuizPresenter: QuestionFactoryDelegate {
             switchToNextQuestion()
             questionFactory?.requestNextQuestion()
         }
+    }
+    
+    // MARK: - Public Methods
+    
+    func didLoadDataFromServer() {
+        viewController?.hideLoadingIndicator()
+        questionFactory?.requestNextQuestion()
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        viewController?.showNetworkError(message: error.localizedDescription)
+    }
+    
+    func didReceiveNextQuestion(question: QuizQuestion?) {
+        guard let question = question else { return }
+        currentQuestion = question
+        let viewModel = convert(model: question)
+        DispatchQueue.main.async { [weak self] in
+            self?.viewController?.show(quiz: viewModel)
+            self?.viewController?.updateButtonsState(isEnabled: true)
+        }
+    }
+    
+    func restartGame(dueTo reason: ReasonForAlert? = nil) {
+        currentQuestionIndex = 0
+        correctAnswers = 0
+        switch reason {
+        case .errorWithData:
+            questionFactory?.loadData()
+        default:
+            questionFactory?.requestNextQuestion()
+        }
+    }
+    
+    func didAnswer(isYes: Bool) {
+        guard let currentQuestion = currentQuestion else { return }
+        let isCorrect = isYes == currentQuestion.correctAnswer
+        proceedWithAnswer(isCorrect: isCorrect)
     }
     
     func convert(model: QuizQuestion) -> QuizStepViewModel {

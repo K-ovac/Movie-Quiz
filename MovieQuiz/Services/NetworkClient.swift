@@ -7,16 +7,29 @@
 
 import Foundation
 
+// MARK: - Alias
+
+typealias NetworkRoutingCompletion = (Result<Data, Error>) -> Void
+
+// MARK: - NetworkRouting
+
 protocol NetworkRouting {
-    func fetch(url: URL, handler: @escaping (Result<Data, Error>) -> Void)
+    func fetch(url: URL, handler: @escaping NetworkRoutingCompletion)
 }
 
+// MARK: - NetworkClient
+
 struct NetworkClient: NetworkRouting {
+    
+    // MARK: - NetworkError
+    
     private enum NetworkError: Error {
         case codeError
     }
     
-    func fetch(url: URL, handler: @escaping (Result<Data, Error>) -> Void) {
+    // MARK: - FetchData
+    
+    func fetch(url: URL, handler: @escaping NetworkRoutingCompletion) {
         let request = URLRequest(url: url)
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
@@ -39,22 +52,19 @@ struct NetworkClient: NetworkRouting {
     }
 }
 
+// MARK: - StubNetworkClient: NetworkRouting
+
 struct StubNetworkClient: NetworkRouting {
     
+    // MARK: - TestError
+    
     enum TestError: Error {
-    case test
+        case test
     }
+    
+    // MARK: - Properties
     
     let emulateError: Bool
-    
-    func fetch(url: URL, handler: @escaping (Result<Data, Error>) -> Void) {
-        if emulateError {
-            handler(.failure(TestError.test))
-        } else {
-            handler(.success(expectedResponse))
-        }
-    }
-    
     private var expectedResponse: Data {
         """
         {
@@ -87,5 +97,15 @@ struct StubNetworkClient: NetworkRouting {
             ]
           }
         """.data(using: .utf8) ?? Data()
+    }
+    
+    // MARK: - Fetch
+    
+    func fetch(url: URL, handler: @escaping NetworkRoutingCompletion) {
+        if emulateError {
+            handler(.failure(TestError.test))
+        } else {
+            handler(.success(expectedResponse))
+        }
     }
 }

@@ -7,10 +7,14 @@
 
 import Foundation
 
+// MARK: - MostPopularMovies
+
 struct MostPopularMovies: Decodable {
     let errorMessage: String
     let items: [MostPopularMovie]
 }
+
+// MARK: - MostPopularMovies
 
 struct MostPopularMovie: Decodable {
     let title: String

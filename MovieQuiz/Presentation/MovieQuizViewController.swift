@@ -1,8 +1,12 @@
 import UIKit
-import Foundation
 
 final class MovieQuizViewController: UIViewController, MovieQuizViewControllerProtocol {
-    private var presenter: MovieQuizPresenter!
+    
+    // MARK: - Properties
+    
+    private var presenter: MovieQuizPresenter?
+    
+    // MARK: - Outlets
     
     @IBOutlet weak private var imageView: UIImageView!
     @IBOutlet weak private var textLabel: UILabel!
@@ -11,26 +15,32 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     @IBOutlet weak private var yesButtonOutlets: UIButton!
     @IBOutlet private var activityIndicator: UIActivityIndicatorView!
     
+    // MARK: - Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        imageView.layer.cornerRadius = 20
+        imageView.layer.cornerRadius = Constants.CornerRadius.radius16
         imageView.clipsToBounds = true
         
-        imageView.accessibilityIdentifier = "Poster"
-        counterLabel.accessibilityIdentifier = "Index"
-        yesButtonOutlets.accessibilityIdentifier = "Yes"
-        noButtonOutlets.accessibilityIdentifier = "No"
+        imageView.accessibilityIdentifier = Constants.AccessibilityIdentifier.imageView
+        counterLabel.accessibilityIdentifier = Constants.AccessibilityIdentifier.counterLabel
+        yesButtonOutlets.accessibilityIdentifier = Constants.AccessibilityIdentifier.yesButtonOutlets
+        noButtonOutlets.accessibilityIdentifier = Constants.AccessibilityIdentifier.noButtonOutlets
         
         presenter = MovieQuizPresenter(viewController: self)
     }
     
+    // MARK: - Actions
+    
     @IBAction private func yesButtonClicked(_ sender: Any) {
-        presenter.yesButtonClicked()
+        presenter?.didAnswer(isYes: true)
     }
     
     @IBAction private func noButtonClicked(_ sender: Any) {
-        presenter.noButtonClicked()
+        presenter?.didAnswer(isYes: false)
     }
+    
+    // MARK: - Factory Methods
     
     func show(quiz step: QuizStepViewModel) {
         imageView.layer.borderColor = UIColor.clear.cgColor
@@ -41,8 +51,8 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
     
     func showAnswerResult(isCorrect: Bool) {
         imageView.layer.masksToBounds = true
-        imageView.layer.cornerRadius = 20
-        imageView.layer.borderWidth = 8
+        imageView.layer.cornerRadius = Constants.CornerRadius.radius20
+        imageView.layer.borderWidth = Constants.Sizes.size8
         imageView.layer.borderColor = isCorrect ? UIColor.ypGreenIOS.cgColor : UIColor.ypRedIOS.cgColor
     }
     
@@ -52,10 +62,10 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
             message: result.text,
             preferredStyle: .alert
         )
-        alert.view.accessibilityIdentifier = "GameResultsAlert"
+        alert.view.accessibilityIdentifier = Constants.AccessibilityIdentifier.gameResultAlert
         
         let action = UIAlertAction(title: result.buttonText, style: .default) { [weak self] _ in
-            self?.presenter.restartGame()
+            self?.presenter?.restartGame()
         }
         alert.addAction(action)
         self.present(alert, animated: true, completion: nil)
@@ -84,7 +94,7 @@ final class MovieQuizViewController: UIViewController, MovieQuizViewControllerPr
             preferredStyle: .alert
         )
         let action = UIAlertAction(title: "Попробовать ещё раз", style: .default) { [weak self] _ in
-            self?.presenter.restartGame(dueTo: .errorWithData)
+            self?.presenter?.restartGame(dueTo: .errorWithData)
         }
         alert.addAction(action)
         present(alert, animated: true)

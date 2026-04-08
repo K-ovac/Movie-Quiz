@@ -6,12 +6,15 @@
 //
 
 import UIKit
-import Foundation
+
+// MARK: - ReasonForAlert
 
 enum ReasonForAlert {
     case endGame
     case errorWithData
 }
+
+// MARK: - AlertPresenter: AlertPresenterProtocol
 
 final class AlertPresenter: AlertPresenterProtocol {
     

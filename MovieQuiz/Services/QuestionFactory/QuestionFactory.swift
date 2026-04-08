@@ -8,14 +8,21 @@
 import Foundation
 
 final class QuestionFactory: QuestionFactoryProtocol {
+    
+    // MARK: - Properties
+    
     private let moviesLoader: MoviesLoading
     private var delegate: QuestionFactoryDelegate?
+    private var movies: [MostPopularMovie] = []
+    
+    // MARK: - Init
 
     init(moviesLoader: MoviesLoading, delegate: QuestionFactoryDelegate?) {
         self.moviesLoader = moviesLoader
         self.delegate = delegate
     }
-    private var movies: [MostPopularMovie] = []
+    
+    // MARK: - Load Data
 
     func loadData() {
         moviesLoader.loadMovies { [weak self] result in
@@ -31,6 +38,9 @@ final class QuestionFactory: QuestionFactoryProtocol {
             }
         }
     }
+    
+    // MARK: - Request Next Question
+    
     func requestNextQuestion() {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }

@@ -7,29 +7,41 @@
 
 import Foundation
 
+// MARK: - Alias
+
+typealias MostPopularMoviesCompletion = (Result<MostPopularMovies, Error>) -> Void
+
+// MARK: - MoviesLoading
+
 protocol MoviesLoading {
-    func loadMovies(handler: @escaping (Result<MostPopularMovies, Error>) -> Void)
+    func loadMovies(handler: @escaping MostPopularMoviesCompletion)
 }
 
-private let imdbKey = "k_zcuw1ytf"
-private let imdbUrl = "https://tv-api.com/en/API/Top250Movies/"
-
 struct MoviesLoader: MoviesLoading {
-    private let networkClient: NetworkRouting
     
-    init(networkClient: NetworkRouting = NetworkClient()) {
-        self.networkClient = networkClient
-    }
+    // MARK: - Properties
+    
+    private let networkClient: NetworkRouting
+    private static let imdbKey = "k_zcuw1ytf"
+    private static let imdbUrl = "https://tv-api.com/en/API/Top250Movies/"
     
     private var popularMoviesUrl: URL {
-        guard let url = URL(string: "\(imdbUrl)\(imdbKey)") else {
+        guard let url = URL(string: "\(MoviesLoader.imdbUrl)\(MoviesLoader.imdbKey)") else {
             preconditionFailure("Unable to construct popularMoviesUrl")
         }
         
         return url
     }
     
-    func loadMovies(handler: @escaping (Result<MostPopularMovies, Error>) -> Void) {
+    // MARK: - Init
+    
+    init(networkClient: NetworkRouting = NetworkClient()) {
+        self.networkClient = networkClient
+    }
+    
+    // MARK: - Load Movies
+    
+    func loadMovies(handler: @escaping MostPopularMoviesCompletion) {
         print("loadMovies called, url:", popularMoviesUrl)
         
         networkClient.fetch(url: popularMoviesUrl) { result in
